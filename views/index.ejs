@@ -1,0 +1,1047 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>文件互传与分享</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f5f5f5;
+      padding: 20px;
+    }
+    
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      background-color: white;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      padding: 20px;
+    }
+    
+    h1 {
+      text-align: center;
+      color: #333;
+      margin-bottom: 30px;
+    }
+    
+    .upload-section {
+      margin-bottom: 30px;
+      padding: 20px;
+      border: 2px dashed #ccc;
+      border-radius: 8px;
+      text-align: center;
+    }
+    
+    .upload-section input[type="file"] {
+      margin-bottom: 10px;
+    }
+    
+    .upload-section button {
+      background-color: #4CAF50;
+      color: white;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    
+    .upload-section button:hover {
+      background-color: #45a049;
+    }
+    
+    .chat-section {
+      margin-bottom: 30px;
+    }
+    
+    .chat-messages {
+      height: 200px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      padding: 10px;
+      overflow-y: scroll;
+      margin-bottom: 10px;
+    }
+    
+    .message {
+      margin-bottom: 10px;
+      padding: 8px;
+      border-radius: 4px;
+      background-color: #f1f1f1;
+    }
+    
+    .message.system {
+      background-color: #e3f2fd;
+    }
+    
+    .chat-input {
+      display: flex;
+    }
+    
+    .chat-input input {
+      flex: 1;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 4px 0 0 4px;
+    }
+    
+    .chat-input button {
+      background-color: #2196F3;
+      color: white;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 0 4px 4px 0;
+      cursor: pointer;
+    }
+    
+    .chat-input button:hover {
+      background-color: #0b7dda;
+    }
+    
+    .files-section {
+      margin-top: 30px;
+    }
+    
+    .files-section h2 {
+      margin-bottom: 15px;
+      color: #333;
+    }
+    
+    .file-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px;
+      border-bottom: 1px solid #eee;
+    }
+    
+    .file-item:last-child {
+      border-bottom: none;
+    }
+    
+    .file-item a {
+      color: #2196F3;
+      text-decoration: none;
+    }
+    
+    .file-item a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>文件互传与分享</h1>
+    
+    <div class="qrcode-section" style="text-align: center; margin-bottom: 30px;">
+      <h2>我的id号码</h2>
+      <div id="deviceIdDisplay" style="font-size: 16px; margin-bottom: 10px; font-family: monospace;">加载中...</div>
+      
+      <div style="margin-bottom: 20px;">
+        <h3>设置昵称</h3>
+        <input type="text" id="nicknameInput" placeholder="输入你的昵称" style="padding: 10px; width: 300px;">
+        <button id="saveNicknameBtn" style="margin-left: 10px; padding: 10px 20px; background-color: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer;">保存</button>
+      </div>
+      
+      <div id="qrcode" style="display: inline-block;">
+        <img id="qrcodeImage" src="" alt="二维码" style="width: 200px; height: 200px;">
+      </div>
+      <p style="margin-top: 10px; font-size: 14px; color: #666;">使用其他设备扫描此二维码添加好友</p>
+      
+      <div style="margin-top: 20px;">
+        <h3>添加好友</h3>
+        <input type="text" id="friendCode" placeholder="输入好友二维码内容" style="padding: 10px; width: 300px;">
+        <button id="addFriendBtn" style="margin-left: 10px; padding: 10px 20px; background-color: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer;">添加</button>
+      </div>
+    </div>
+    
+    <div class="upload-section">
+      <h2>上传文件</h2>
+      <input type="file" id="fileInput">
+      <button id="uploadBtn">上传</button>
+      <div class="progress-container" style="display: none; margin-top: 10px;">
+        <div class="progress-bar" style="width: 0%; height: 10px; background-color: #4CAF50; border-radius: 5px;"></div>
+        <div class="progress-text" style="margin-top: 5px; font-size: 12px;">0%</div>
+      </div>
+    </div>
+    
+    <div class="chat-section">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+        <h2>公共聊天</h2>
+        <button id="clearChatBtn" style="background-color: #f44336; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 12px;">清除聊天记录</button>
+      </div>
+      <div class="chat-messages" id="chatMessages"></div>
+      <div class="chat-input">
+        <input type="text" id="messageInput" placeholder="输入消息...">
+        <button id="sendBtn">发送</button>
+      </div>
+    </div>
+    
+    <div class="files-section">
+      <h2>最近上传的文件</h2>
+      <div id="fileList"></div>
+    </div>
+    
+    <div class="friends-section" style="margin-top: 30px;">
+      <h2>我的好友</h2>
+      <div id="friendList" style="display: flex; flex-wrap: wrap; gap: 10px;"></div>
+    </div>
+    
+    <div id="chatModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); z-index: 1000;">
+      <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background-color: white; padding: 20px; border-radius: 8px; width: 80%; max-width: 500px; max-height: 80vh; overflow-y: auto;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+          <h3 id="chatTitle">聊天</h3>
+          <button id="closeChat" style="background-color: #f44336; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer;">关闭</button>
+        </div>
+        <div id="privateChatMessages" style="height: 300px; border: 1px solid #ccc; border-radius: 4px; padding: 10px; margin-bottom: 10px; overflow-y: scroll; display: flex; flex-direction: column;"></div>
+        <div style="display: flex; margin-bottom: 10px;">
+          <input type="file" id="privateFileInput" style="flex: 1; margin-right: 10px;">
+          <button id="privateFileUpload" style="padding: 5px 10px; background-color: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer;">发送文件</button>
+        </div>
+        <div style="display: flex;">
+          <input type="text" id="privateMessageInput" placeholder="输入消息..." style="flex: 1; padding: 10px; border: 1px solid #ccc; border-radius: 4px 0 0 4px;">
+          <button id="privateSendBtn" style="padding: 10px 20px; background-color: #2196F3; color: white; border: none; border-radius: 0 4px 4px 0; cursor: pointer;">发送</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
+  <script>
+    // 等待DOM加载完成
+    document.addEventListener('DOMContentLoaded', function() {
+    const socket = io();
+    const chatMessages = document.getElementById('chatMessages');
+    const messageInput = document.getElementById('messageInput');
+    const sendBtn = document.getElementById('sendBtn');
+    const fileInput = document.getElementById('fileInput');
+    const uploadBtn = document.getElementById('uploadBtn');
+    const fileList = document.getElementById('fileList');
+    
+    // 设备信息
+    let deviceId = localStorage.getItem('deviceId');
+    let deviceName = localStorage.getItem('deviceName') || 'My Device';
+    
+    // 保存昵称
+    function saveNickname() {
+      const nickname = document.getElementById('nicknameInput').value.trim();
+      if (nickname) {
+        deviceName = nickname;
+        localStorage.setItem('deviceName', deviceName);
+        
+        // 发送到服务器更新
+        fetch('/api/user/update', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            deviceId: deviceId,
+            deviceName: deviceName
+          })
+        })
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            addMessage('昵称已更新', true);
+            // 刷新好友列表
+            displayFriends();
+          } else {
+            addMessage('更新昵称失败', true);
+          }
+        })
+        .catch(error => {
+          console.error('Error updating nickname:', error);
+          addMessage('更新昵称失败', true);
+        });
+      }
+    }
+    
+    // 生成固定的设备ID
+    function generateFixedDeviceId() {
+      if (!deviceId) {
+        // 生成一个随机的设备ID并存储在本地存储中
+        deviceId = 'dev_' + Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
+        localStorage.setItem('deviceId', deviceId);
+        console.log('Generated new device ID:', deviceId);
+      } else {
+        console.log('Using existing device ID:', deviceId);
+      }
+    }
+    
+    function addMessage(message, isSystem = false) {
+      const div = document.createElement('div');
+      div.className = `message ${isSystem ? 'system' : ''}`;
+      
+      if (isSystem) {
+        div.textContent = message;
+      } else if (typeof message === 'object' && message.content) {
+        // 显示发送者名称和消息内容
+        div.innerHTML = `<strong>${message.fromDeviceName || '未知用户'}</strong>: ${message.content}`;
+      } else {
+        div.textContent = message;
+      }
+      
+      chatMessages.appendChild(div);
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+    
+    function addFile(file) {
+      const div = document.createElement('div');
+      div.className = 'file-item';
+      div.dataset.fileId = file.id;
+      div.innerHTML = `
+        <span>${file.name} (${(file.size / 1024).toFixed(2)} KB)</span>
+        <div>
+          <a href="${file.url}" target="_blank">下载</a>
+          <button class="delete-btn" style="margin-left: 10px; background-color: #f44336; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer;">删除</button>
+        </div>
+      `;
+      fileList.appendChild(div);
+      
+      // 添加删除按钮事件监听
+      const deleteBtn = div.querySelector('.delete-btn');
+      deleteBtn.addEventListener('click', () => {
+        if (confirm('确定要删除这个文件吗？')) {
+          deleteFile(file.id);
+        }
+      });
+    }
+    
+    function deleteFile(fileId) {
+      fetch(`/api/files/${fileId}`, {
+        method: 'DELETE'
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          // 从DOM中移除文件项
+          const fileItem = document.querySelector(`.file-item[data-file-id="${fileId}"]`);
+          if (fileItem) {
+            fileItem.remove();
+          }
+          addMessage('文件已删除', true);
+        }
+      })
+      .catch(error => {
+        console.error('Error deleting file:', error);
+      });
+    }
+    
+    socket.on('message', (message) => {
+      addMessage(message);
+    });
+    
+    socket.on('fileUploaded', (file) => {
+      addMessage(`文件上传: ${file.name}`, true);
+      addFile(file);
+    });
+    
+    socket.on('fileDeleted', (fileId) => {
+      // 从DOM中移除文件项
+      const fileItem = document.querySelector(`.file-item[data-file-id="${fileId}"]`);
+      if (fileItem) {
+        fileItem.remove();
+        addMessage('文件已删除', true);
+      }
+    });
+    
+    // 好友申请通知
+    socket.on('friendRequest', (data) => {
+      if (data.user.deviceId === deviceId) {
+        const request = data.request;
+        addMessage(`收到来自 ${request.fromDeviceName} 的好友申请`, true);
+        
+        // 显示好友申请对话框
+        if (confirm(`是否接受 ${request.fromDeviceName} 的好友申请？`)) {
+          // 接受好友申请
+          fetch('/api/friend/accept', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              deviceId: deviceId,
+              requestId: request.id
+            })
+          })
+          .then(response => response.json())
+          .then(data => {
+            if (data.success) {
+              addMessage('好友申请已接受', true);
+            }
+          });
+        }
+      }
+    });
+    
+    // 好友添加成功通知
+    socket.on('friendAdded', (data) => {
+      if (data.user1.deviceId === deviceId || data.user2.deviceId === deviceId) {
+        const friendName = data.user1.deviceId === deviceId ? data.user2.deviceName : data.user1.deviceName;
+        addMessage(`已添加 ${friendName} 为好友`, true);
+        displayFriends(); // 刷新好友列表
+      }
+    });
+    
+    // 私聊相关变量
+    let currentChatFriendId = null;
+    let currentChatFriendName = null;
+    // 未读消息计数
+    let unreadMessages = {};
+    
+    // 开始聊天
+    function startChat(friendDeviceId, friendName) {
+      currentChatFriendId = friendDeviceId;
+      currentChatFriendName = friendName;
+      
+      // 重置未读消息计数
+      if (unreadMessages[friendDeviceId]) {
+        delete unreadMessages[friendDeviceId];
+        displayFriends(); // 刷新好友列表以更新红点
+      }
+      
+      document.getElementById('chatTitle').textContent = friendName;
+      document.getElementById('privateChatMessages').innerHTML = '';
+      
+      // 加载聊天记录
+      fetch(`/api/chat/${deviceId}/${friendDeviceId}`)
+        .then(response => response.json())
+        .then(data => {
+          if (data.messages && data.messages.length > 0) {
+            data.messages.forEach(message => {
+              addPrivateMessage(message, message.fromDeviceId === deviceId);
+            });
+          }
+        })
+        .catch(error => {
+          console.error('Error loading chat history:', error);
+        });
+      
+      document.getElementById('chatModal').style.display = 'block';
+    }
+    
+    // 关闭聊天
+    document.getElementById('closeChat').addEventListener('click', () => {
+      document.getElementById('chatModal').style.display = 'none';
+      currentChatFriendId = null;
+      currentChatFriendName = null;
+    });
+    
+    // 发送私聊消息
+    document.getElementById('privateSendBtn').addEventListener('click', () => {
+      const message = document.getElementById('privateMessageInput').value.trim();
+      if (message && currentChatFriendId) {
+        const privateMessage = {
+          fromDeviceId: deviceId,
+          fromDeviceName: deviceName,
+          toDeviceId: currentChatFriendId,
+          content: message,
+          timestamp: new Date().toISOString()
+        };
+        
+        socket.emit('privateMessage', privateMessage);
+        addPrivateMessage(privateMessage, true);
+        document.getElementById('privateMessageInput').value = '';
+      }
+    });
+    
+    // 发送私聊文件
+    document.getElementById('privateFileUpload').addEventListener('click', () => {
+      const fileInput = document.getElementById('privateFileInput');
+      const file = fileInput.files[0];
+      if (file && currentChatFriendId) {
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('toDeviceId', currentChatFriendId);
+        formData.append('fromDeviceId', deviceId);
+        formData.append('fromDeviceName', deviceName);
+        
+        // 创建进度条消息
+        const messagesDiv = document.getElementById('privateChatMessages');
+        const progressMsgDiv = document.createElement('div');
+        progressMsgDiv.className = 'upload-progress';
+        progressMsgDiv.style.marginBottom = '10px';
+        progressMsgDiv.style.padding = '8px';
+        progressMsgDiv.style.borderRadius = '4px';
+        progressMsgDiv.style.backgroundColor = '#e3f2fd';
+        progressMsgDiv.style.alignSelf = 'flex-end';
+        progressMsgDiv.style.display = 'flex';
+        progressMsgDiv.style.flexDirection = 'column';
+        progressMsgDiv.style.width = '200px';
+        progressMsgDiv.innerHTML = `
+          <div style="margin-bottom: 4px;">上传文件: ${file.name}</div>
+          <div style="width: 100%; height: 10px; background-color: #ddd; border-radius: 5px; overflow: hidden;">
+            <div class="progress-bar-fill" style="width: 0%; height: 100%; background-color: #4CAF50;"></div>
+          </div>
+          <div class="progress-text" style="font-size: 12px; margin-top: 4px;">0%</div>
+        `;
+        messagesDiv.appendChild(progressMsgDiv);
+        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        
+        const xhr = new XMLHttpRequest();
+        xhr.upload.addEventListener('progress', (e) => {
+          if (e.lengthComputable) {
+            const percentComplete = (e.loaded / e.total) * 100;
+            const progressBarFill = progressMsgDiv.querySelector('.progress-bar-fill');
+            const progressText = progressMsgDiv.querySelector('.progress-text');
+            if (progressBarFill) progressBarFill.style.width = percentComplete + '%';
+            if (progressText) progressText.textContent = Math.round(percentComplete) + '%';
+          }
+        });
+        
+        xhr.addEventListener('load', () => {
+          if (xhr.status === 200) {
+            const data = JSON.parse(xhr.responseText);
+            if (data.success) {
+              // 移除进度条
+              progressMsgDiv.remove();
+              const fileMessage = {
+                fromDeviceId: deviceId,
+                fromDeviceName: deviceName,
+                content: `<a href="${data.file.url}" target="_blank">${data.file.name}</a> (${(data.file.size / 1024).toFixed(2)} KB)`,
+                type: 'file',
+                fileId: data.file.id
+              };
+              addPrivateMessage(fileMessage, true);
+            }
+          }
+        });
+        
+        xhr.addEventListener('error', () => {
+          progressMsgDiv.remove();
+          addMessage('文件上传失败', true);
+        });
+        
+        xhr.open('POST', '/api/file/private');
+        xhr.send(formData);
+        fileInput.value = '';
+      }
+    });
+    
+    // 添加私聊消息
+    function addPrivateMessage(message, isOwn = false) {
+      const messagesDiv = document.getElementById('privateChatMessages');
+      const messageDiv = document.createElement('div');
+      messageDiv.style.marginBottom = '10px';
+      messageDiv.style.padding = '8px';
+      messageDiv.style.borderRadius = '4px';
+      messageDiv.style.backgroundColor = isOwn ? '#e3f2fd' : '#f1f1f1';
+      messageDiv.style.alignSelf = isOwn ? 'flex-end' : 'flex-start';
+      messageDiv.style.display = 'flex';
+      messageDiv.style.flexDirection = 'column';
+      
+      // 检查是否是文件类型的消息
+      if (message.type === 'file' || (message.content && message.content.includes('<a href') && message.content.includes('</a>'))) {
+        // 文件消息：只显示文件和删除按钮（不显示发送者名称）
+        messageDiv.innerHTML = `
+          <div style="margin-bottom: 4px;">${message.content}</div>
+          ${isOwn ? `<button class="deletePrivateFile" data-file-id="${message.fileId || message.id}" style="background-color: #f44336; color: white; border: none; padding: 2px 6px; border-radius: 3px; cursor: pointer; font-size: 12px;">删除</button>` : ''}
+        `;
+      } else {
+        // 文字消息：只显示内容
+        messageDiv.innerHTML = message.content;
+      }
+      
+      messagesDiv.appendChild(messageDiv);
+      messagesDiv.scrollTop = messagesDiv.scrollHeight;
+      
+      // 添加删除按钮事件监听
+      if (isOwn && (message.type === 'file' || (message.content && message.content.includes('<a href') && message.content.includes('</a>')))) {
+        const deleteBtn = messageDiv.querySelector('.deletePrivateFile');
+        if (deleteBtn) {
+          deleteBtn.addEventListener('click', () => {
+            const fileId = deleteBtn.dataset.fileId;
+            if (confirm('确定要删除这个文件消息吗？')) {
+              deletePrivateFile(fileId);
+              messageDiv.remove();
+            }
+          });
+        }
+      }
+    }
+    
+    // 接收私聊消息
+    socket.on('privateMessage', (message) => {
+      if (message.toDeviceId === deviceId) {
+        if (currentChatFriendId === message.fromDeviceId) {
+          addPrivateMessage(message, false);
+        } else {
+          addMessage(`收到来自 ${message.fromDeviceName} 的消息`, true);
+          // 增加未读消息计数
+          if (!unreadMessages[message.fromDeviceId]) {
+            unreadMessages[message.fromDeviceId] = 0;
+          }
+          unreadMessages[message.fromDeviceId]++;
+          displayFriends(); // 刷新好友列表以显示红点
+        }
+      }
+    });
+    
+    // 接收私聊文件
+    socket.on('privateFile', (file) => {
+      if (file.toDeviceId === deviceId) {
+        if (currentChatFriendId === file.fromDeviceId) {
+          const fileMessage = {
+            fromDeviceId: file.fromDeviceId,
+            fromDeviceName: file.fromDeviceName,
+            content: `<a href="${file.url}" target="_blank">${file.name}</a> (${(file.size / 1024).toFixed(2)} KB)`,
+            type: 'file',
+            fileId: file.id
+          };
+          addPrivateMessage(fileMessage, false);
+        } else {
+          addMessage(`收到来自 ${file.fromDeviceName} 的文件: ${file.name}`, true);
+          // 增加未读消息计数
+          if (!unreadMessages[file.fromDeviceId]) {
+            unreadMessages[file.fromDeviceId] = 0;
+          }
+          unreadMessages[file.fromDeviceId]++;
+          displayFriends(); // 刷新好友列表以显示红点
+        }
+      }
+    });
+    
+    // 加载历史数据
+    fetch('/api/history')
+      .then(response => response.json())
+      .then(history => {
+        // 显示历史消息
+        history.messages.forEach(msg => {
+          addMessage(msg);
+        });
+        // 显示历史文件
+        history.files.forEach(file => {
+          addFile(file);
+        });
+      })
+      .catch(error => {
+        console.error('Error loading history:', error);
+      });
+    
+    // 注册设备（本地生成固定ID）
+    function registerDevice() {
+      console.log('Registering device...');
+      // 生成固定的设备ID
+      generateFixedDeviceId();
+      console.log('Current deviceId:', deviceId);
+      console.log('Current deviceName:', deviceName);
+      
+      // 直接返回设备信息，不调用API
+      return Promise.resolve({ deviceId, deviceName });
+    }
+    
+    // 生成二维码
+    function generateQRCode() {
+      console.log('Generating QR code...');
+      console.log('Device ID:', deviceId);
+      console.log('Device Name:', deviceName);
+      
+      // 生成包含设备信息的网络访问URL
+      const networkUrl = 'http://192.168.1.5:3000';
+      let qrUrl = networkUrl;
+      if (deviceId && deviceName) {
+        qrUrl = `${networkUrl}?action=addFriend&deviceId=${deviceId}&deviceName=${encodeURIComponent(deviceName)}`;
+      }
+      
+      try {
+        const qrcodeImage = document.getElementById('qrcodeImage');
+        console.log('QR Code Image Element:', qrcodeImage);
+        
+        if (qrcodeImage) {
+          // 使用静态二维码API
+          const apiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(qrUrl)}`;
+          qrcodeImage.src = apiUrl;
+          console.log('QR Code generated successfully with API');
+          console.log('QR Code URL:', qrUrl);
+        } else {
+          console.error('QR code image element not found');
+        }
+      } catch (error) {
+        console.error('Error generating QR code:', error);
+      }
+    }
+    
+    // 显示好友列表
+    function displayFriends() {
+      fetch(`/api/user/${deviceId}`)
+        .then(response => response.json())
+        .then(data => {
+          if (data.user) {
+            const friendList = document.getElementById('friendList');
+            friendList.innerHTML = '';
+            
+            data.user.friends.forEach(friend => {
+              const friendDiv = document.createElement('div');
+              friendDiv.style.padding = '10px';
+              friendDiv.style.border = '1px solid #ccc';
+              friendDiv.style.borderRadius = '4px';
+              friendDiv.style.backgroundColor = '#f9f9f9';
+              friendDiv.style.position = 'relative';
+              friendDiv.style.display = 'flex';
+              friendDiv.style.justifyContent = 'space-between';
+              friendDiv.style.alignItems = 'center';
+              
+              // 检查是否有未读消息
+              const unreadCount = unreadMessages[friend.deviceId] || 0;
+              
+              friendDiv.innerHTML = `
+                <strong>${friend.deviceName}</strong>
+                <div style="display: flex; align-items: center;">
+                  <button class="chatWithFriend" data-device-id="${friend.deviceId}" style="margin-left: 10px; padding: 5px 10px; background-color: #2196F3; color: white; border: none; border-radius: 4px; cursor: pointer; position: relative;">
+                    聊天
+                    ${unreadCount > 0 ? `<span style="position: absolute; top: -5px; right: -5px; background-color: #f44336; color: white; border-radius: 50%; width: 18px; height: 18px; font-size: 12px; display: flex; align-items: center; justify-content: center;">${unreadCount}</span>` : ''}
+                  </button>
+                  <button class="removeFriend" data-device-id="${friend.deviceId}" style="margin-left: 10px; padding: 5px 10px; background-color: #f44336; color: white; border: none; border-radius: 4px; cursor: pointer;">删除</button>
+                </div>
+              `;
+              friendList.appendChild(friendDiv);
+            });
+            
+            // 添加聊天按钮事件
+            document.querySelectorAll('.chatWithFriend').forEach(button => {
+              button.addEventListener('click', () => {
+                const friendDeviceId = button.dataset.deviceId;
+                const friendName = button.parentElement.previousElementSibling.textContent;
+                startChat(friendDeviceId, friendName);
+              });
+            });
+            
+            // 添加删除好友按钮事件
+            document.querySelectorAll('.removeFriend').forEach(button => {
+              button.addEventListener('click', () => {
+                const friendDeviceId = button.dataset.deviceId;
+                const friendName = button.parentElement.previousElementSibling.textContent;
+                if (confirm(`确定要删除好友 ${friendName} 吗？`)) {
+                  removeFriend(friendDeviceId);
+                }
+              });
+            });
+          }
+        });
+    }
+    
+    // 处理URL参数，自动填充好友信息到输入框
+    function handleUrlParams() {
+      console.log('handleUrlParams called');
+      const urlParams = new URLSearchParams(window.location.search);
+      console.log('URL params:', Object.fromEntries(urlParams.entries()));
+      const action = urlParams.get('action');
+      console.log('Action:', action);
+      
+      if (action === 'addFriend') {
+        const friendDeviceId = urlParams.get('deviceId');
+        const friendDeviceName = urlParams.get('deviceName');
+        console.log('Friend device ID:', friendDeviceId);
+        console.log('Friend device name:', friendDeviceName);
+        
+        if (friendDeviceId && friendDeviceName) {
+          console.log('Processing friend request from URL params:', friendDeviceId, friendDeviceName);
+          
+          // 等待DOM元素加载完成
+          setTimeout(() => {
+            console.log('Checking friendCode input element...');
+            const friendCodeInput = document.getElementById('friendCode');
+            console.log('Friend code input element:', friendCodeInput);
+            if (friendCodeInput) {
+              // 直接填充设备ID
+              friendCodeInput.value = friendDeviceId;
+              console.log('Friend code filled:', friendDeviceId);
+              addMessage(`已自动填充好友ID: ${friendDeviceName} (${friendDeviceId})`, true);
+            } else {
+              console.error('Friend code input element not found');
+            }
+          }, 1000);
+          
+          // 清除URL参数
+          window.history.replaceState({}, document.title, window.location.pathname);
+        }
+      }
+    }
+    
+    // 删除好友
+    function removeFriend(friendDeviceId) {
+      fetch('/api/friend/remove', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          deviceId: deviceId,
+          friendDeviceId: friendDeviceId
+        })
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          addMessage('好友已删除', true);
+          // 清除未读消息计数
+          if (unreadMessages[friendDeviceId]) {
+            delete unreadMessages[friendDeviceId];
+          }
+          // 刷新好友列表
+          displayFriends();
+        } else {
+          addMessage('删除好友失败', true);
+        }
+      })
+      .catch(error => {
+        console.error('Error removing friend:', error);
+        addMessage('删除好友失败', true);
+      });
+    }
+    
+    // 删除私聊文件
+    function deletePrivateFile(fileId) {
+      fetch(`/api/files/private/${fileId}`, {
+        method: 'DELETE'
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (!data.success) {
+          addMessage('删除文件失败', true);
+        }
+      })
+      .catch(error => {
+        console.error('Error deleting private file:', error);
+        addMessage('删除文件失败', true);
+      });
+    }
+    
+    // 添加好友按钮事件
+    document.getElementById('addFriendBtn').addEventListener('click', () => {
+      const friendCode = document.getElementById('friendCode').value.trim();
+      if (friendCode) {
+        try {
+          let friendDeviceId, friendDeviceName;
+          
+          // 检查是否是二维码数据格式
+          if (friendCode.includes(',')) {
+            // 解析二维码数据
+            const qrData = JSON.parse(atob(friendCode.split(',')[1]));
+            if (qrData.type === 'device') {
+              friendDeviceId = qrData.deviceId;
+              friendDeviceName = qrData.deviceName || 'Unknown Device';
+            } else {
+              throw new Error('Invalid QR code type');
+            }
+          } else {
+            // 直接使用输入的固定ID
+            friendDeviceId = friendCode;
+            friendDeviceName = 'Unknown Device';
+          }
+          
+          // 发送好友申请
+          fetch('/api/friend/request', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                fromDeviceId: deviceId,
+                toDeviceId: friendDeviceId,
+                message: `来自 ${deviceName} 的好友申请`
+              })
+            })
+            .then(response => {
+              if (response.ok) {
+                return response.json();
+              } else if (response.status === 400) {
+                return response.json().then(data => {
+                  throw new Error(data.error);
+                });
+              } else {
+                throw new Error('Network error');
+              }
+            })
+            .then(data => {
+              if (data.success) {
+                addMessage('好友申请已发送', true);
+                document.getElementById('friendCode').value = '';
+              } else {
+                addMessage('好友申请发送失败', true);
+              }
+            })
+            .catch(error => {
+              console.error('Error sending friend request:', error);
+              if (error.message === 'Already friends') {
+                addMessage('已经是好友了', true);
+              } else {
+                addMessage('好友申请发送失败', true);
+              }
+            });
+        } catch (error) {
+          console.error('Error parsing friend code:', error);
+          // 如果是直接输入的ID，尝试使用它
+          if (!friendCode.includes(',')) {
+            // 发送好友申请
+            fetch('/api/friend/request', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                fromDeviceId: deviceId,
+                toDeviceId: friendCode,
+                message: `来自 ${deviceName} 的好友申请`
+              })
+            })
+            .then(response => {
+              if (response.ok) {
+                return response.json();
+              } else if (response.status === 400) {
+                return response.json().then(data => {
+                  throw new Error(data.error);
+                });
+              } else {
+                throw new Error('Network error');
+              }
+            })
+            .then(data => {
+              if (data.success) {
+                addMessage('好友申请已发送', true);
+                document.getElementById('friendCode').value = '';
+              } else {
+                addMessage('好友申请发送失败', true);
+              }
+            })
+            .catch(error => {
+              console.error('Error sending friend request:', error);
+              if (error.message === 'Already friends') {
+                addMessage('已经是好友了', true);
+              } else {
+                addMessage('好友申请发送失败', true);
+              }
+            });
+          } else {
+            addMessage('无效的好友ID', true);
+          }
+        }
+      }
+    });
+    
+    sendBtn.addEventListener('click', () => {
+      const message = messageInput.value.trim();
+      if (message) {
+        socket.emit('sendMessage', {
+          content: message,
+          fromDeviceId: deviceId,
+          fromDeviceName: deviceName
+        });
+        messageInput.value = '';
+      }
+    });
+    
+    sendBtn.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        sendBtn.click();
+      }
+    });
+    
+    // 清除聊天记录
+    const clearChatBtn = document.getElementById('clearChatBtn');
+    clearChatBtn.addEventListener('click', () => {
+      if (confirm('确定要清除所有聊天记录吗？')) {
+        chatMessages.innerHTML = '';
+      }
+    });
+    
+    uploadBtn.addEventListener('click', () => {
+      const file = fileInput.files[0];
+      if (!file) {
+        alert('请选择一个文件');
+        return;
+      }
+      
+      const formData = new FormData();
+      formData.append('file', file);
+      
+      const xhr = new XMLHttpRequest();
+      const progressContainer = document.querySelector('.progress-container');
+      const progressBar = document.querySelector('.progress-bar');
+      const progressText = document.querySelector('.progress-text');
+      
+      progressContainer.style.display = 'block';
+      
+      xhr.upload.addEventListener('progress', (e) => {
+        if (e.lengthComputable) {
+          const percentComplete = (e.loaded / e.total) * 100;
+          progressBar.style.width = percentComplete + '%';
+          progressText.textContent = Math.round(percentComplete) + '%';
+        }
+      });
+      
+      xhr.addEventListener('load', () => {
+        if (xhr.status === 200) {
+          const data = JSON.parse(xhr.responseText);
+          console.log('File uploaded:', data);
+          progressContainer.style.display = 'none';
+          progressBar.style.width = '0%';
+          progressText.textContent = '0%';
+        }
+      });
+      
+      xhr.addEventListener('error', () => {
+        console.error('Error uploading file');
+        progressContainer.style.display = 'none';
+        progressBar.style.width = '0%';
+        progressText.textContent = '0%';
+      });
+      
+      xhr.open('POST', '/upload');
+      xhr.send(formData);
+    });
+    
+    // 初始化设备
+    console.log('Initializing device...');
+    
+    // 生成固定的设备ID
+    generateFixedDeviceId();
+    
+    // 显示设备ID
+    const deviceIdDisplay = document.getElementById('deviceIdDisplay');
+    if (deviceIdDisplay) {
+      console.log('Setting deviceIdDisplay text to:', deviceId);
+      deviceIdDisplay.textContent = deviceId;
+    } else {
+      console.error('deviceIdDisplay element not found');
+    }
+    
+    // 填充昵称输入框
+    const nicknameInput = document.getElementById('nicknameInput');
+    if (nicknameInput) {
+      nicknameInput.value = deviceName;
+    }
+    
+    // 保存昵称按钮事件
+    const saveNicknameBtn = document.getElementById('saveNicknameBtn');
+    if (saveNicknameBtn) {
+      saveNicknameBtn.addEventListener('click', saveNickname);
+    }
+    
+    // 生成二维码
+    generateQRCode();
+    
+    // 加载好友列表
+    setTimeout(() => {
+      console.log('Loading friends list...');
+      displayFriends();
+    }, 500);
+    
+    // 处理URL参数
+    setTimeout(() => {
+      console.log('Handling URL params...');
+      handleUrlParams();
+    }, 1000);
+    });
+  </script>
+</body>
+</html>
