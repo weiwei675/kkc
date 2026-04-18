@@ -6,6 +6,11 @@ const fs = require('fs-extra');
 const path = require('path');
 const QRCode = require('qrcode');
 
+// 生成设备唯一标识
+function generateDeviceId() {
+  return 'dev_' + Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
+}
+
 // 数据持久化
 const DATA_FILE = 'data.json';
 let data = {
@@ -75,8 +80,27 @@ app.get('/api/server/info', (req, res) => {
 // 解析JSON请求体
 app.use(express.json());
 
+// 添加CORS中间件
+app.use((req, res, next) => {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  
+  if (req.method === 'OPTIONS') {
+    return res.status(204).end();
+  }
+  
+  next();
+});
+
 const server = http.createServer(app);
-const io = socketIo(server);
+const io = socketIo(server, {
+  cors: {
+    origin: '*',
+    methods: ['GET', 'POST']
+  },
+  path: '/socket.io'
+});
 
 // 获取当前工作目录
 const cwd = process.cwd();
@@ -546,10 +570,7 @@ app.delete('/api/files/private/:fileId', (req, res) => {
   }
 });
 
-// 生成设备唯一标识
-function generateDeviceId() {
-  return 'dev_' + Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
-}
+
 
 // 启动服务器
 const PORT = process.env.PORT || 3000;

@@ -224,7 +224,10 @@
   <script>
     // 等待DOM加载完成
     document.addEventListener('DOMContentLoaded', function() {
-    const socket = io();
+    const socket = io(window.location.origin, {
+      path: '/socket.io',
+      transports: ['websocket', 'polling']
+    });
     const chatMessages = document.getElementById('chatMessages');
     const messageInput = document.getElementById('messageInput');
     const sendBtn = document.getElementById('sendBtn');
